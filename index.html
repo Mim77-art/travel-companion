@@ -2446,12 +2446,20 @@
                     <button onClick={() => {
                       const url = window.location.href;
                       if (navigator.share) {
-                        navigator.share({ title: state.trip.name, url });
-                      } else if (navigator.clipboard) {
-                        navigator.clipboard.writeText(url).then(() => toast('📋 Đã copy link!')).catch(() => {
-                          prompt('Copy link này:', url);
-                        });
-                      } else {
+                        navigator.share({ title: state.trip.name, url }).catch(() => {});
+                        return;
+                      }
+                      // Fallback: execCommand copy (works everywhere)
+                      try {
+                        const ta = document.createElement('textarea');
+                        ta.value = url;
+                        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+                        document.body.appendChild(ta);
+                        ta.focus(); ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        toast('📋 Đã copy link!');
+                      } catch(e) {
                         prompt('Copy link này:', url);
                       }
                     }} className="p-2 rounded-lg transition" style={{color:'var(--bg-card)'}} title="Chia sẻ chuyến đi">
