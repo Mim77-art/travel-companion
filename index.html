@@ -200,6 +200,28 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script>
+    // 🔥 FIREBASE CONFIG — paste config của bạn vào đây
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyPlaceholder",
+      authDomain: "placeholder.firebaseapp.com",
+      projectId: "placeholder",
+      storageBucket: "placeholder.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:placeholder"
+    };
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      window._db = firebase.firestore();
+      window._firebaseReady = true;
+    } catch(e) {
+      window._firebaseReady = false;
+      console.warn('Firebase not configured:', e.message);
+    }
+  </script>
 </head>
 <body class="transition-colors">
   <div id="root"></div>
@@ -2250,28 +2272,74 @@
         }
       }, []);
       const initialized = useRef(false);
+      const isSyncing = useRef(false);
 
-      // Load from localStorage
+      // ── Trip ID (dùng cho Firestore document ID) ──
+      const tripId = useRef((() => {
+        const hash = window.location.hash.replace('#', '');
+        if (hash && hash.length > 8) {
+          localStorage.setItem('travel-tripId', hash);
+          return hash;
+        }
+        let id = localStorage.getItem('travel-tripId');
+        if (!id) {
+          id = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+          localStorage.setItem('travel-tripId', id);
+        }
+        if (window.location.hash !== '#' + id) window.location.hash = id;
+        return id;
+      })());
+
+      // Load từ localStorage (instant) + Firestore real-time
       useEffect(() => {
+        // 1. Load localStorage trước
         try {
           const saved = localStorage.getItem('travel-companion-data');
           if (saved) dispatch({ type: 'LOAD_STATE', payload: JSON.parse(saved) });
         } catch {}
-        initialized.current = true;
+
+        // 2. Subscribe Firestore (nếu đã cấu hình)
+        if (!window._firebaseReady) {
+          initialized.current = true;
+          return;
+        }
+        const unsub = window._db.collection('trips').doc(tripId.current)
+          .onSnapshot(doc => {
+            if (doc.exists && !isSyncing.current) {
+              const data = doc.data();
+              // Giữ ảnh từ localStorage (base64 quá lớn cho Firestore)
+              try {
+                const local = JSON.parse(localStorage.getItem('travel-companion-data') || '{}');
+                dispatch({ type: 'LOAD_STATE', payload: { ...data, photos: local.photos || [] } });
+              } catch {
+                dispatch({ type: 'LOAD_STATE', payload: data });
+              }
+            }
+            initialized.current = true;
+          }, () => { initialized.current = true; });
+        return () => unsub();
       }, []);
 
-      // Save to localStorage (debounced)
+      // Save localStorage + Firestore (debounced)
       useEffect(() => {
         if (!initialized.current) return;
         const timer = setTimeout(() => {
           try {
-            // Don't save photos in main save to reduce size
-            const toSave = { ...state };
-            localStorage.setItem('travel-companion-data', JSON.stringify(toSave));
+            localStorage.setItem('travel-companion-data', JSON.stringify(state));
           } catch (e) {
             console.warn('localStorage quota exceeded');
           }
-        }, 500);
+          // Sync lên Firestore (bỏ photos)
+          if (window._firebaseReady) {
+            const { photos, ...toCloud } = state;
+            isSyncing.current = true;
+            window._db.collection('trips').doc(tripId.current)
+              .set(toCloud)
+              .then(() => { setTimeout(() => { isSyncing.current = false; }, 200); })
+              .catch(console.warn);
+          }
+        }, 800);
         return () => clearTimeout(timer);
       }, [state]);
 
@@ -2330,6 +2398,11 @@
                     </button>
                     <button onClick={() => dispatch({ type: 'SET_SETTINGS', payload: { language: state.settings.language === 'vi' ? 'en' : 'vi' } })} className="p-2 rounded-lg text-xs font-bold" style={{color:'var(--bg-card)'}}>
                       {state.settings.language === 'vi' ? '🇻🇳' : '🇬🇧'}
+                    </button>
+                    <button onClick={() => {
+                      navigator.clipboard.writeText(window.location.href).then(() => toast('📋 Đã copy link chia sẻ!'));
+                    }} className="p-2 rounded-lg transition" style={{color:'var(--bg-card)'}} title="Chia sẻ chuyến đi">
+                      <Icon name="Share2" size={18} />
                     </button>
                   </div>
                 </div>
