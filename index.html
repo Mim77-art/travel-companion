@@ -664,113 +664,156 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Báo cáo chi tiêu — ${d.tripName}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Chốt nợ — ${d.tripName}</title>
   <style>
-    /* ===== BASE ===== */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; padding: 32px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #fdf6ee; color: #2d1b0e; min-height: 100vh; }
 
     /* ===== HEADER ===== */
-    .report-header { background: linear-gradient(135deg, #6366f1, #4338ca); color: #fff; border-radius: 16px; padding: 28px 32px; margin-bottom: 28px; }
-    .report-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
-    .report-header .sub { opacity: .8; font-size: 14px; }
-    .report-header .ts { opacity: .55; font-size: 12px; margin-top: 6px; }
+    .top-bar { background: #8b5c3a; padding: 20px 16px 16px; }
+    .top-bar h1 { font-size: 20px; font-weight: 800; color: #fffdf8; }
+    .top-bar .sub { font-size: 13px; color: rgba(255,253,248,.65); margin-top: 4px; }
+
+    /* ===== WRAP ===== */
+    .wrap { padding: 16px; max-width: 600px; margin: 0 auto; }
 
     /* ===== CARD ===== */
-    .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,.07); margin-bottom: 24px; overflow: hidden; }
-    .card-header { padding: 14px 20px; font-weight: 700; font-size: 15px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-    .two-col .card { margin-bottom: 0; }
+    .card { background: #fffdf8; border-radius: 16px; border: 2px solid #2d1b0e;
+            box-shadow: 4px 4px 0 #2d1b0e; margin-bottom: 16px; overflow: hidden; }
+    .card-head { padding: 12px 16px; font-weight: 700; font-size: 14px;
+                 background: #f5ede0; border-bottom: 2px solid #e8d5bb; }
 
-    /* ===== TABLE ===== */
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { padding: 10px 14px; background: #6366f1; color: #fff; text-align: left; font-size: 12px; font-weight: 600; white-space: nowrap; }
-    th.th-member { text-align: right; min-width: 80px; }
-    td { padding: 8px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-    tr.even td { background: #fff; }
-    tr.odd  td { background: #f9fafb; }
+    /* ===== QUỸ ===== */
+    .fund-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .fund-item { padding: 14px 12px; text-align: center; border-right: 1px solid #e8d5bb; }
+    .fund-item:last-child { border-right: none; }
+    .fund-label { font-size: 11px; color: #b08060; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+    .fund-val { font-size: 16px; font-weight: 800; }
+    .pos { color: #059669; } .neg { color: #ef4444; }
 
-    /* ===== DATE ROW ===== */
-    tr.date-row td { background: #e0e7ff; padding: 7px 14px; font-weight: 700; font-size: 13px; color: #4338ca; }
-    .date-sub { font-weight: 400; color: #6b7280; margin-left: 10px; }
+    /* ===== SỐ DƯ RÒNG ===== */
+    .balance-row { display: flex; align-items: center; justify-content: space-between;
+                   padding: 12px 16px; border-bottom: 1px solid #f5ede0; }
+    .balance-row:last-child { border-bottom: none; }
+    .balance-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+    .balance-amt { font-weight: 800; font-size: 15px; }
 
-    /* ===== TOTAL ROW ===== */
-    tr.total-row td { background: #e0e7ff; font-weight: 700; padding: 10px 14px; color: #4338ca; }
+    /* ===== GIAO DỊCH ===== */
+    .txn { display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+           border-bottom: 1px solid #f5ede0; }
+    .txn:last-child { border-bottom: none; }
+    .txn-avatar { font-size: 28px; line-height: 1; }
+    .txn-name { font-weight: 700; font-size: 14px; }
+    .txn-role { font-size: 11px; color: #b08060; }
+    .txn-arrow { flex: 1; text-align: center; }
+    .txn-amt { font-weight: 800; font-size: 15px; color: #2d1b0e;
+               background: #f59e0b; border: 2px solid #b45309;
+               border-radius: 20px; padding: 4px 12px; white-space: nowrap; }
+    .txn-icon { font-size: 16px; color: #b08060; }
 
-    /* ===== CELL HELPERS ===== */
-    .num   { text-align: right; }
-    .bold  { font-weight: 600; }
-    .muted { color: #6b7280; font-size: 13px; }
-    .title { font-weight: 500; }
-    .note  { font-size: 12px; color: #9ca3af; max-width: 200px; }
-    .payer { font-weight: 700; color: #6366f1; }
-    .pos   { color: #10b981; }
-    .neg   { color: #ef4444; }
-    .zero  { color: #9ca3af; }
-    .empty   { padding: 20px; text-align: center; color: #9ca3af; }
-    .settled { padding: 20px; text-align: center; color: #10b981; font-weight: 600; }
-    .arrow   { text-align: center; font-weight: 700; color: #6366f1; }
+    /* ===== BẢNG CHI TIÊU ===== */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+    th { padding: 10px 12px; background: #2d1b0e; color: #fffdf8;
+         text-align: left; font-size: 11px; font-weight: 700;
+         white-space: nowrap; letter-spacing: .04em; }
+    th.num { text-align: right; }
+    td { padding: 9px 12px; border-bottom: 1px solid #f5ede0; vertical-align: middle; }
+    tr.even td { background: #fffdf8; }
+    tr.odd  td { background: #fef9f0; }
+    tr.date-row td { background: #f59e0b22; padding: 7px 12px;
+                     font-weight: 700; font-size: 12px; color: #b45309; }
+    tr.total-row td { background: #2d1b0e; color: #fffdf8; font-weight: 700; padding: 10px 12px; }
+    .num { text-align: right; }
+    .bold { font-weight: 700; }
+    .muted { color: #b08060; font-size: 12px; }
+    .payer { font-weight: 800; color: #2d1b0e; }
+    .empty { padding: 20px; text-align: center; color: #b08060; }
+    .date-sub { font-weight: 400; color: #b08060; margin-left: 8px; font-size: 11px; }
 
-    /* ===== FUND TABLE ===== */
-    .fund-val { padding: 14px; font-weight: 700; font-size: 16px; }
+    /* ===== HÒA VỐN ===== */
+    .hoa-von { text-align: center; padding: 24px 16px; font-size: 16px;
+               font-weight: 700; color: #059669; }
 
-    /* ===== PRINT ===== */
+    /* ===== FOOTER ===== */
+    .footer { text-align: center; padding: 20px; font-size: 12px; color: #b08060; }
+
     @media print {
-      body { padding: 10px; background: #fff; }
-      .card { box-shadow: none; border: 1px solid #e5e7eb; }
-      table { page-break-inside: auto; }
-      tr { page-break-inside: avoid; }
+      body { background: #fff; }
+      .card { box-shadow: none; border: 1px solid #e8d5bb; }
     }
   </style>
 </head>
 <body>
 
-<div class="report-header">
+<div class="top-bar">
   <h1>🧳 ${d.tripName}</h1>
-  <p class="sub">${dateStr(d.startDate)}${d.startDate&&d.endDate?' → ':''}${dateStr(d.endDate)} &nbsp;·&nbsp; Đơn vị: ${d.base}</p>
-  <p class="ts">Xuất lúc: ${d.exportedAt}</p>
+  <p class="sub">${dateStr(d.startDate)}${d.startDate&&d.endDate?' → ':''}${dateStr(d.endDate)} · Xuất: ${d.exportedAt}</p>
+</div>
+
+<div class="wrap">
+
+<div class="card">
+  <div class="card-head">💰 Quỹ chung</div>
+  <div class="fund-grid">
+    <div class="fund-item"><div class="fund-label">Tổng quỹ</div><div class="fund-val">${fmt(d.fund.total)}</div></div>
+    <div class="fund-item"><div class="fund-label">Đã chi</div><div class="fund-val neg">${fmt(d.fund.deducted)}</div></div>
+    <div class="fund-item"><div class="fund-label">Còn lại</div><div class="fund-val ${d.fund.remaining>=0?'pos':'neg'}">${fmt(d.fund.remaining)}</div></div>
+  </div>
 </div>
 
 <div class="card">
-  <div class="card-header">💰 Tóm tắt quỹ chung</div>
-  <table><thead><tr><th>Tổng quỹ</th><th>Đã chi</th><th>Còn lại</th></tr></thead>
-  <tbody><tr>
-    <td class="fund-val">${fmt(d.fund.total)} ${d.base}</td>
-    <td class="fund-val neg">${fmt(d.fund.deducted)} ${d.base}</td>
-    <td class="fund-val ${d.fund.remaining>=0?'pos':'neg'}">${fmt(d.fund.remaining)} ${d.base}</td>
-  </tr></tbody></table>
+  <div class="card-head">📊 Số dư ròng</div>
+  ${d.members.map(m => `
+  <div class="balance-row">
+    <div class="balance-name"><span style="font-size:22px">${m.avatar}</span>${m.name}</div>
+    <div class="balance-amt ${m.balance>0?'pos':m.balance<0?'neg':''}">${m.balance>0?'+':''}${fmt(m.balance)} <span style="font-size:12px;font-weight:500">${d.base}</span></div>
+  </div>`).join('')}
 </div>
 
 <div class="card">
-  <div class="card-header">🧾 Chi tiêu chi tiết</div>
+  <div class="card-head">💸 Phương án hoàn tiền</div>
+  ${d.txns.length === 0
+    ? `<div class="hoa-von">🎉 Hòa vốn — Không ai nợ ai!</div>`
+    : d.txns.map(tx => `
+  <div class="txn">
+    <div><div class="txn-avatar">${tx.fromAvatar}</div></div>
+    <div><div class="txn-name">${tx.fromName}</div><div class="txn-role">trả cho</div></div>
+    <div class="txn-arrow"><span class="txn-amt">${fmt(tx.amount)} ${d.base}</span><div class="txn-icon" style="margin-top:4px">→</div></div>
+    <div style="text-align:right"><div class="txn-name">${tx.toName}</div><div class="txn-role">nhận tiền</div></div>
+    <div><div class="txn-avatar">${tx.toAvatar}</div></div>
+  </div>`).join('')}
+</div>
+
+<div class="card">
+  <div class="card-head">🧾 Chi tiêu chi tiết</div>
+  <div class="table-wrap">
   <table>
-    <thead><tr><th>Ngày</th><th>Tên khoản</th><th>Danh mục</th><th class="num">Chi phí</th>${memberHeaders}<th>Ghi chú</th></tr></thead>
+    <thead><tr><th>Ngày</th><th>Tên khoản</th><th>Chi phí</th>${d.members.map(m=>`<th class="num">${m.avatar}</th>`).join('')}<th>Ghi chú</th></tr></thead>
     <tbody>
-      ${expenseRows || emptyExpenses}
-      <tr class="total-row">
-        <td colspan="4">Tổng cộng</td>${totalMemberCells}
-        <td class="num">${fmt(d.grandTotal)} ${d.base}</td>
-      </tr>
+      ${d.groupedExpenses.length === 0 ? `<tr><td colspan="${3+d.members.length+1}" class="empty">Chưa có chi tiêu</td></tr>` : d.groupedExpenses.map(({date, dayTotal, expenses}) =>
+        `<tr class="date-row"><td colspan="${3+d.members.length+1}">📅 ${dateStr(date)}<span class="date-sub">Tổng: ${fmt(dayTotal)} ${d.base}</span></td></tr>`
+        + expenses.map((e,i) => `<tr class="${i%2===0?'even':'odd'}">
+          <td class="muted">${dateStr(e.date)||'—'}</td>
+          <td class="bold">${e.title||'—'}</td>
+          <td class="num bold">${fmt(e.amount)}</td>
+          ${d.members.map(m => e.memberShares[m.id]!=null
+            ? `<td class="num ${e.payerId===m.id?'payer':''}">${fmt(e.memberShares[m.id])}</td>`
+            : `<td></td>`).join('')}
+          <td class="muted">${e.note||'—'}</td>
+        </tr>`).join('')
+      ).join('')}
+      <tr class="total-row"><td colspan="${3+d.members.length+1}">Tổng cộng: ${fmt(d.grandTotal)} ${d.base}</td></tr>
     </tbody>
   </table>
-</div>
-
-<div class="two-col">
-  <div class="card">
-    <div class="card-header">📊 Số dư ròng</div>
-    <table><thead><tr><th>Thành viên</th><th class="num">Số dư (${d.base})</th></tr></thead>
-    <tbody>${balanceRows || `<tr><td colspan="2" class="empty">Chưa có thành viên</td></tr>`}</tbody>
-    </table>
-  </div>
-  <div class="card">
-    <div class="card-header">💸 Phương án hoàn tiền</div>
-    <table><thead><tr><th>Người trả</th><th>Số tiền</th><th>Người nhận</th></tr></thead>
-    <tbody>${settleRows}</tbody>
-    </table>
   </div>
 </div>
 
+<div class="footer">Travel Companion · ${d.exportedAt}</div>
+
+</div>
 </body>
 </html>`;
     }
